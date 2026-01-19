@@ -61,11 +61,14 @@ class TestWithinSess:
             save_model=True,
             optuna=False,
         )
+        self.original_carbon = ev._carbonfootprint
+        ev._carbonfootprint = False
 
     def teardown_method(self):
         path = self.eval.results.filepath
         if os.path.isfile(path):
             os.remove(path)
+        ev._carbonfootprint = self.original_carbon
 
     def test_mne_labels(self):
         kwargs = dict(paradigm=FakeImageryParadigm(), datasets=[dataset])
@@ -85,7 +88,7 @@ class TestWithinSess:
         # We should get 4 results, 2 sessions 2 subjects
         assert len(results) == 4
         # We should have 9 columns in the results data frame
-        assert len(results[0].keys()) == (9 if _carbonfootprint else 8)
+        assert len(results[0].keys()) == (9 if ev._carbonfootprint else 8)
 
     def test_compound_dataset(self):
         ch1 = ["C3", "Cz", "Fz"]
@@ -120,7 +123,7 @@ class TestWithinSess:
         # We should get 4 results, 2 sessions 2 subjects
         assert len(results) == 4
         # We should have 9 columns in the results data frame
-        assert len(results[0].keys()) == (9 if _carbonfootprint else 8)
+        assert len(results[0].keys()) == (9 if ev._carbonfootprint else 8)
 
     def test_eval_grid_search(self):
         # Test grid search
@@ -139,7 +142,7 @@ class TestWithinSess:
         # We should get 4 results, 2 sessions 2 subjects
         assert len(results) == 4
         # We should have 9 columns in the results data frame
-        assert len(results[0].keys()) == (9 if _carbonfootprint else 8)
+        assert len(results[0].keys()) == (9 if ev._carbonfootprint else 8)
 
     def test_eval_grid_search_optuna(self):
         if not optuna_available:
@@ -348,6 +351,7 @@ class TestWithinSessLearningCurve:
 
 class Test_CrossSubj(TestWithinSess):
     def setup_method(self):
+        super().setup_method()
         self.eval = ev.CrossSubjectEvaluation(
             paradigm=FakeImageryParadigm(),
             datasets=[dataset],
@@ -367,6 +371,7 @@ class Test_CrossSubj(TestWithinSess):
 
 class Test_CrossSess(TestWithinSess):
     def setup_method(self):
+        super().setup_method()
         self.eval = ev.CrossSessionEvaluation(
             paradigm=FakeImageryParadigm(),
             datasets=[dataset],
